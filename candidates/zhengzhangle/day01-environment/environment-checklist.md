@@ -97,38 +97,15 @@ Snowflake CURRENT_TIMESTAMP: 2025-12-15 17:08:51.24;
 - [x] 成功创建功能分支
 - [x] 提交符合规范的 Commit Message
 - [x] 创建并提交了第一个 Pull Request
-- [x] PR 通过了自动化检查（CI/CD）
-- [ ] PR 获得了导师的 Code Review
 
 **第一个 PR：**
 - PR 链接：``
-- 标题：`- 完成 EnvironmentTest.java，验证 Oracle 和 Snowflake 连接
-- 完成 DatabaseComparisonTest.java，对比两个数据库的查询结果
-- 记录环境配置问题与解决方案`
-- 状态：✅ Merged
+- 标题：
+- 状态：
 
 ---
 
 ## 遇到的问题和解决方案
-
-### 问题 1：MFA 设置失败
-- **描述：** 扫描二维码后，验证码始终提示错误
-- **原因：** 手机时间未同步
-- **解决：** 启用手机"自动设置时间"功能
-- **耗时：** 15 分钟（包括查找文档时间）
-
-### 问题 2：DBeaver 连接 Snowflake 超时
-- **描述：** 连接时提示 Connection timeout
-- **原因：** 未连接公司 VPN
-- **解决：** 连接 VPN 后重试
-- **耗时：** 10 分钟
-
-### 问题 3：Git Push 权限被拒绝
-- **描述：** `git push` 时提示 Permission denied (publickey)
-- **原因：** SSH Key 未添加到 GitHub
-- **解决：** 生成 SSH Key 并添加到 GitHub 账户
-- **耗时：** 20 分钟
-
 ---
 
 ## 审核签字
