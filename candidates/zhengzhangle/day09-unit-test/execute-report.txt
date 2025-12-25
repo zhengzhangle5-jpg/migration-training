@@ -1,0 +1,78 @@
+PS C:\Users\pc005\Code\oracle-snowflake-migration-training> .\regression-test.ps1
+=== Running regression tests ===
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------< com.migration:migration-training >------------------
+[INFO] Building migration-training 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- clean:3.2.0:clean (default-clean) @ migration-training ---
+[INFO] Deleting C:\Users\pc005\Code\oracle-snowflake-migration-training\target
+[INFO]
+[INFO] --- jacoco:0.8.11:prepare-agent (prepare-agent) @ migration-training ---
+[INFO] argLine set to -javaagent:C:\\Users\\pc005\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.11\\org.jacoco.agent-0.8.11-runtime.jar=destfile=C:\\Users\\pc005\\Code\\oracle-snowflake-migration-training\\target\\jacoco.exec
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ migration-training ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO]
+[INFO] --- compiler:3.13.0:compile (default-compile) @ migration-training ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 49 source files with javac [debug target 21] to target\classes
+[INFO]
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ migration-training ---
+[INFO] skip non existing resourceDirectory C:\Users\pc005\Code\oracle-snowflake-migration-training\src\test\resources
+[INFO]
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ migration-training ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug target 21] to target\test-classes
+[INFO]
+[INFO] --- surefire:3.2.5:test (default-test) @ migration-training ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO]
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.example.dao.oracle.EmployerDaoTest
+WARNING: A Java agent has been loaded dynamically (C:\Users\pc005\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.9\byte-buddy-agent-1.14.9.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.641 s -- in com.example.dao.oracle.EmployerDaoTest
+[INFO] Running com.example.dao.oracle.EmployerReportDaoTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.034 s -- in com.example.dao.oracle.EmployerReportDaoTest
+[INFO]
+[INFO] Results:
+[INFO]
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO]
+[INFO] --- jacoco:0.8.11:report (report) @ migration-training ---
+[INFO] Loading execution data file C:\Users\pc005\Code\oracle-snowflake-migration-training\target\jacoco.exec
+[INFO] Analyzed bundle 'migration-training' with 49 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  5.077 s
+[INFO] Finished at: 2025-12-25T13:16:54+09:00
+[INFO] ------------------------------------------------------------------------
+=== Generating coverage report ===
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ------------------< com.migration:migration-training >------------------
+[INFO] Building migration-training 1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- jacoco:0.8.11:report (default-cli) @ migration-training ---
+[INFO] Loading execution data file C:\Users\pc005\Code\oracle-snowflake-migration-training\target\jacoco.exec
+[INFO] Analyzed bundle 'migration-training' with 49 classes
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.570 s
+[INFO] Finished at: 2025-12-25T13:16:56+09:00
+[INFO] ------------------------------------------------------------------------
+=== Opening JaCoCo report ===
+笨・Regression test finished successfully

@@ -150,8 +150,8 @@ void testStatByIndustry_normal() throws Exception {
 
 **实际结果：**
 
-- 行覆盖率：85% ✅  
-- 分支覆盖率：78% ✅  
+- 行覆盖率：98% ✅  
+- 分支覆盖率：75% ✅  
 - 核心逻辑覆盖：100% ✅  
 
 ---
