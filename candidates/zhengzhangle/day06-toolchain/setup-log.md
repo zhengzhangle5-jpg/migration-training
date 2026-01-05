@@ -56,10 +56,23 @@ ColumnMeta
 | NUMBER(p)   | NUMBER(p)    |
 | DATE        | DATE         |
 
-**目前date功能尚不完善，主要用于测试**
+
+### 1.3 原始建表语句/查询结果一览
+
+```oracle原始语句
+CREATE TABLE EMPLOYERS (
+EMPLOYER_ID   NUMBER(10),
+EMPLOYER_NAME VARCHAR2(100),
+INDUSTRY      VARCHAR2(50),
+EMP_COUNT     NUMBER(8),
+CREATED_DATE  DATE
+);
+```
 
 
-### 1.3 DDL 文件生成
+
+
+### 1.4 表结构转化，DDL 文件生成
 
 **工具名称：** `OracleConnectionUtil`
 **位置：** `src/main/java/com/migration/tools/common/OracleConnectionUtil.java`
@@ -67,22 +80,21 @@ ColumnMeta
 
 **工具名称：** `OracleTableMetadataReader`
 **位置：** `src/main/java/com/migration/tools/ddlconverter/OracleTableMetadataReader.java`
-**功能：** `获取表的结构信息`
+**功能：** `读取表的结构信息`
 
 **工具名称：** `SnowflakeDdlGenerator`
 **位置：** `src/main/java/com/migration/tools/ddlconverter/SnowflakeDdlGenerator.java`
-**功能：** `对建表DDL进行转换，得到snowflake版本`
+**功能：** `按规则对建表DDL进行转换，得到snowflake版本DDL`
 
 **当前实现的自动转换规则如下：**
 
-| Oracle 类型   | Snowflake 类型 |
-| ----------- | ------------ |
-| VARCHAR2(n) | VARCHAR(n)   |
-| NUMBER(p,s) | NUMBER(p,s)  |
-| NUMBER(p)   | NUMBER(p)    |
-| DATE        | DATE         |
+| Oracle 类型   | Snowflake 类型 | 对应字段名        |
+| ----------- | ------------ |--------------|
+| VARCHAR2(n) | VARCHAR(n)   | EMPLOYER_ID |
+| NUMBER(p,s) | NUMBER(p,s)  | REPORT_YEAR  |
+| NUMBER(p)   | NUMBER(p)    | EMPLOYER_ID |
+| DATE        | DATE         | CREATED_DATE |
 
-**目前date功能尚不完善，主要用于测试**
 
 ---
 
@@ -100,9 +112,10 @@ CREATED_DATE  DATE
 );
 ```
 
-### 2.2 snowflake建表语句一览
+### 2.2 经工具转换后得到的snowflake建表语句
 
 **由工具链修改生成的DDL如下：**
+**文件位置：** EMPLOYERS_snowflake.sql（codes仓库中）
 ```
 CREATE TABLE EMPLOYERS (
   EMPLOYER_ID NUMBER(10),
@@ -118,7 +131,7 @@ CREATE TABLE EMPLOYERS (
 1. **工具正确处理了varchar2类型的变换**
 2. **工具正确处理了number整数形式的变换**
 
-### 2.4 人工介入点
+### 2.4 人工介入点（如需要）
 
 **主键 / 索引**
 
