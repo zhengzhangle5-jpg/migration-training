@@ -1,367 +1,226 @@
-# 性能测试模板
+# Performance Test Template
 
 ## 测试信息
-- 测试人：张三
-- 测试日期：2025-02-01
-- 测试对象：订单查询 API
-- 测试环境：Snowflake X-Large Warehouse
+- 测试人：郑章乐
+- 测试日期：2026-01-06
+- 测试环境：Snowflake X-Small Warehouse
+- 测试目的：通过典型慢查询场景，分析 Snowflake 查询执行特性并验证优化手段效果
 
 ---
 
-## 1. 测试目标
+## 1. 数据库设计概述
 
-### 1.1 性能指标
+本次测试使用统一的分析型模型，核心表包括：
 
-| 指标 | 目标值 | Oracle 基准值 |
-|------|--------|--------------|
-| 响应时间（P50） | ≤ 2 秒 | 3 秒 |
-| 响应时间（P95） | ≤ 5 秒 | 8 秒 |
-| 响应时间（P99） | ≤ 10 秒 | 15 秒 |
-| 吞吐量（TPS） | ≥ 100 | 50 |
-| 并发用户数 | 100 | 50 |
-| CPU 使用率 | ≤ 80% | - |
-| 内存使用率 | ≤ 70% | - |
+- users（1,000 行）
+- departments（4 行）
+- orders（≈1,000,000 行，后期扩容）
+- order_items（≈150,000 行）
+- products（500 行）
+- categories（3 行）
+- payments（≈50,000 行）
+
+该模型覆盖了典型的事实表 + 维度表结构，适用于 JOIN、聚合与子查询场景。
 
 ---
 
-## 2. 测试场景
+## 2. 测试场景说明
 
-### 2.1 场景1：单表查询
+### 场景 1：复杂多表 JOIN（7 表）
 
-**查询SQL：**
+**目的**  
+验证多表 JOIN 在 Snowflake 中的执行效率及 JOIN 顺序、过滤条件位置对性能的影响。
+
+#### 原始查询
+
 ```sql
-SELECT * FROM orders
-WHERE order_date = '2025-01-15'
-  AND status = 'COMPLETED';
-```
-
-**测试参数：**
-- 并发用户数：10, 50, 100
-- 每用户执行次数：100
-- 数据量：1,000,000 行
-
-**预期结果：**
-- P50 ≤ 1 秒
-- P95 ≤ 3 秒
-- TPS ≥ 150
-
----
-
-### 2.2 场景2：JOIN 查询
-
-**查询SQL：**
-```sql
-SELECT o.order_id, c.customer_name, o.amount
+SELECT
+    o.order_id,
+    u.user_name,
+    d.department_name,
+    p.product_name,
+    c.category_name,
+    pay.pay_amount
 FROM orders o
-JOIN customers c ON o.customer_id = c.customer_id
-WHERE o.order_date >= '2025-01-01';
+JOIN users u ON o.user_id = u.user_id
+JOIN departments d ON u.department_id = d.department_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+JOIN categories c ON p.category_id = c.category_id
+JOIN payments pay ON o.order_id = pay.order_id
+WHERE pay.status = 'SUCCESS';
 ```
 
-**测试参数：**
-- 并发用户数：10, 50, 100
-- 每用户执行次数：50
-- 数据量：orders(1,000,000), customers(100,000)
+#### 优化后查询
 
-**预期结果：**
-- P50 ≤ 3 秒
-- P95 ≤ 8 秒
-- TPS ≥ 80
-
----
-
-### 2.3 场景3：聚合查询
-
-**查询SQL：**
 ```sql
-SELECT customer_id,
-       COUNT(*) AS order_count,
-       SUM(amount) AS total_amount
-FROM orders
-WHERE order_date >= '2024-01-01'
-GROUP BY customer_id
-HAVING COUNT(*) >= 10;
+SELECT
+    o.order_id,
+    u.user_name,
+    d.department_name,
+    p.product_name,
+    c.category_name,
+    pay.pay_amount
+FROM orders o
+JOIN payments pay
+  ON o.order_id = pay.order_id
+ AND pay.status = 'SUCCESS'   -- 过滤条件前移
+JOIN users u ON o.user_id = u.user_id
+JOIN departments d ON u.department_id = d.department_id
+JOIN order_items oi ON o.order_id = oi.order_id
+JOIN products p ON oi.product_id = p.product_id
+JOIN categories c ON p.category_id = c.category_id;
 ```
 
-**测试参数：**
-- 并发用户数：10, 50
-- 每用户执行次数：20
-- 数据量：1,000,000 行
+#### 优化点分析
 
-**预期结果：**
-- P50 ≤ 5 秒
-- P95 ≤ 12 秒
-- TPS ≥ 30
+- 将高选择性的过滤条件提前到 JOIN 阶段，减少中间结果集
+- 利用 Snowflake 自动 JOIN 重排能力
+- 减少无效数据参与后续 JOIN
 
----
+#### 性能对比（X-Small）
 
-## 3. 测试执行
-
-### 3.1 场景1测试结果
-
-#### 10 并发用户
-
-| 指标 | Oracle | Snowflake | 对比 |
-|------|--------|-----------|------|
-| P50 响应时间 | 2.5 秒 | 0.8 秒 | ✅ 提升 3.1 倍 |
-| P95 响应时间 | 5.2 秒 | 2.1 秒 | ✅ 提升 2.5 倍 |
-| P99 响应时间 | 8.5 秒 | 3.5 秒 | ✅ 提升 2.4 倍 |
-| 平均 TPS | 4.0 | 12.5 | ✅ 提升 3.1 倍 |
-| 最大 TPS | 5.5 | 14.2 | ✅ 提升 2.6 倍 |
-
-**状态：** ✅ **通过**
-
-#### 50 并发用户
-
-| 指标 | Oracle | Snowflake | 对比 |
-|------|--------|-----------|------|
-| P50 响应时间 | 3.2 秒 | 1.1 秒 | ✅ 提升 2.9 倍 |
-| P95 响应时间 | 7.8 秒 | 3.2 秒 | ✅ 提升 2.4 倍 |
-| P99 响应时间 | 12.5 秒 | 5.1 秒 | ✅ 提升 2.5 倍 |
-| 平均 TPS | 15.6 | 45.5 | ✅ 提升 2.9 倍 |
-| 最大 TPS | 22.3 | 58.7 | ✅ 提升 2.6 倍 |
-
-**状态：** ✅ **通过**
-
-#### 100 并发用户
-
-| 指标 | Oracle | Snowflake | 对比 |
-|------|--------|-----------|------|
-| P50 响应时间 | 5.8 秒 | 1.5 秒 | ✅ 提升 3.9 倍 |
-| P95 响应时间 | 14.2 秒 | 4.8 秒 | ✅ 提升 3.0 倍 |
-| P99 响应时间 | 22.5 秒 | 8.2 秒 | ✅ 提升 2.7 倍 |
-| 平均 TPS | 17.2 | 66.7 | ✅ 提升 3.9 倍 |
-| 最大 TPS | 28.5 | 92.3 | ✅ 提升 3.2 倍 |
-
-**状态：** ✅ **通过**
+| 版本 | 执行时间 | Rows Produced |
+|---|---|---|
+| 原始 | ≈ 8.1 s | 4,500,000 |
+| 优化 | ≈ 6.6 s | 4,500,000 |
 
 ---
 
-### 3.2 场景2测试结果
+### 场景 2：大数据量聚合（GROUP BY + COUNT / SUM）
 
-#### 50 并发用户
+**目的**  
+验证高基数聚合在 Snowflake 中的性能瓶颈，以及通过两阶段聚合进行优化。
 
-| 指标 | Oracle | Snowflake | 对比 |
-|------|--------|-----------|------|
-| P50 响应时间 | 6.5 秒 | 2.8 秒 | ✅ 提升 2.3 倍 |
-| P95 响应时间 | 15.8 秒 | 7.2 秒 | ✅ 提升 2.2 倍 |
-| P99 响应时间 | 28.5 秒 | 12.5 秒 | ✅ 提升 2.3 倍 |
-| 平均 TPS | 7.7 | 17.9 | ✅ 提升 2.3 倍 |
+#### 原始查询（慢查询）
 
-**状态：** ✅ **通过**
-
----
-
-### 3.3 场景3测试结果
-
-#### 10 并发用户
-
-| 指标 | Oracle | Snowflake | 对比 |
-|------|--------|-----------|------|
-| P50 响应时间 | 12.5 秒 | 4.2 秒 | ✅ 提升 3.0 倍 |
-| P95 响应时间 | 25.8 秒 | 10.5 秒 | ✅ 提升 2.5 倍 |
-| P99 响应时间 | 38.2 秒 | 15.8 秒 | ✅ 提升 2.4 倍 |
-| 平均 TPS | 0.8 | 2.4 | ✅ 提升 3.0 倍 |
-
-**状态：** ✅ **通过**
-
----
-
-## 4. 资源使用情况
-
-### 4.1 Warehouse 使用
-
-| Warehouse 大小 | 场景 | 平均利用率 | 峰值利用率 | 成本/小时 |
-|---------------|------|-----------|-----------|----------|
-| Small | 场景1（10并发） | 35% | 52% | $2 |
-| Medium | 场景1（50并发） | 58% | 78% | $4 |
-| Large | 场景1（100并发） | 72% | 89% | $8 |
-| Large | 场景2（50并发） | 65% | 85% | $8 |
-| X-Large | 场景3（10并发） | 48% | 72% | $16 |
-
-**建议：**
-- 场景1：使用 Medium Warehouse（成本和性能平衡）
-- 场景2：使用 Large Warehouse
-- 场景3：使用 Large Warehouse（X-Large 浪费）
-
----
-
-## 5. 瓶颈分析
-
-### 5.1 Query Profile 分析
-
-**场景1 - 单表查询：**
-```
-执行计划：
-1. TableScan[orders]
-   - Partitions Total: 1,200
-   - Partitions Scanned: 15  ✅ 分区裁剪有效（98.75% 减少）
-   - Bytes Scanned: 2.5 GB
-
-2. Filter
-   - Rows In: 8,333
-   - Rows Out: 125
-   - Selectivity: 1.5%
-
-总执行时间：0.8 秒
-- TableScan: 0.6 秒 (75%)
-- Filter: 0.2 秒 (25%)
+```sql
+SELECT
+    u.user_id,
+    u.status,
+    d.department_name,
+    o.order_date,
+    COUNT(DISTINCT o.order_id) AS order_count,
+    SUM(o.order_amount * 1.07) AS total_amount
+FROM orders o
+JOIN users u ON o.user_id = u.user_id
+JOIN departments d ON u.department_id = d.department_id
+WHERE o.order_date >= DATEADD(MONTH, -12, CURRENT_DATE)
+GROUP BY
+    u.user_id,
+    u.status,
+    d.department_name,
+    o.order_date
+HAVING SUM(o.order_amount) > 1000;
 ```
 
-**优化建议：**
-- ✅ 已添加聚簇键：`CLUSTER BY (order_date)`
-- ✅ 分区裁剪有效
+#### 优化后查询（两阶段聚合）
 
-**场景2 - JOIN 查询：**
-```
-执行计划：
-1. TableScan[customers]
-   - Bytes Scanned: 50 MB
-
-2. TableScan[orders]
-   - Bytes Scanned: 5 GB
-
-3. HashJoin
-   - Join Type: INNER
-   - Join Method: HASH
-   - Rows Out: 85,234
-
-总执行时间：2.8 秒
-- TableScan[orders]: 1.8 秒 (64%)
-- HashJoin: 0.8 秒 (29%)
-- TableScan[customers]: 0.2 秒 (7%)
-```
-
-**优化建议：**
-- ✅ 小表（customers）作为 Build 端
-- ⚠️ 可以考虑创建物化视图（高频查询）
-
----
-
-## 6. 对比总结
-
-### 6.1 性能提升汇总
-
-| 场景 | Oracle P50 | Snowflake P50 | 提升倍数 |
-|------|-----------|--------------|---------|
-| 单表查询（10并发） | 2.5s | 0.8s | 3.1x |
-| 单表查询（100并发） | 5.8s | 1.5s | 3.9x |
-| JOIN查询（50并发） | 6.5s | 2.8s | 2.3x |
-| 聚合查询（10并发） | 12.5s | 4.2s | 3.0x |
-
-**平均性能提升：** 3.1 倍
-
-### 6.2 吞吐量提升
-
-| 场景 | Oracle TPS | Snowflake TPS | 提升倍数 |
-|------|-----------|--------------|---------|
-| 单表查询（100并发） | 17.2 | 66.7 | 3.9x |
-| JOIN查询（50并发） | 7.7 | 17.9 | 2.3x |
-| 聚合查询（10并发） | 0.8 | 2.4 | 3.0x |
-
-**平均吞吐量提升：** 3.1 倍
-
----
-
-## 7. 成本分析
-
-### 7.1 Warehouse 成本
-
-| 场景 | Warehouse | 运行时间 | 成本 | Oracle 成本 | 节省 |
-|------|-----------|---------|------|------------|------|
-| 单表查询（100并发） | Large | 2.5 小时 | $20 | $40 | 50% |
-| JOIN查询（50并发） | Large | 3.0 小时 | $24 | $48 | 50% |
-| 聚合查询（10并发） | Large | 1.5 小时 | $12 | $30 | 60% |
-
-**总成本：** $56（Snowflake） vs $118（Oracle）
-**成本节省：** 52.5%
-
----
-
-## 8. 结论和建议
-
-### 8.1 测试结论
-
-1. **性能表现：** ✅ **优秀**
-   - 所有场景均达到或超过目标
-   - 平均性能提升 3.1 倍
-
-2. **吞吐量：** ✅ **优秀**
-   - 平均吞吐量提升 3.1 倍
-   - 100 并发下 TPS 达到 66.7（目标 100）
-
-3. **成本：** ✅ **优秀**
-   - 成本节省 52.5%
-   - 性能提升的同时降低成本
-
-### 8.2 优化建议
-
-1. **已实施优化：**
-   - ✅ 添加聚簇键
-   - ✅ 使用合适的 Warehouse 大小
-   - ✅ 优化 SQL（避免全表扫描）
-
-2. **进一步优化：**
-   - ⚠️ 高频 JOIN 查询创建物化视图
-   - ⚠️ 启用 Search Optimization Service
-   - ⚠️ 考虑使用 Multi-Cluster Warehouse（高并发场景）
-
-### 8.3 上线建议
-
-- ✅ **建议上线**
-- 监控前 1 周的性能表现
-- 准备回滚方案（保留 Oracle 环境）
-
----
-
-## 9. 测试工具和脚本
-
-### 9.1 JMeter 测试脚本
-
-```xml
-<!-- scenario1.jmx -->
-<ThreadGroup>
-  <stringProp name="ThreadGroup.num_threads">100</stringProp>
-  <stringProp name="ThreadGroup.ramp_time">60</stringProp>
-  <stringProp name="ThreadGroup.duration">1800</stringProp>
-</ThreadGroup>
+```sql
+WITH order_agg AS (
+    SELECT
+        o.user_id,
+        o.order_date,
+        COUNT(DISTINCT o.order_id) AS order_count,
+        SUM(o.order_amount * 1.07) AS total_amount
+    FROM orders o
+    WHERE o.order_date >= DATEADD(MONTH, -12, CURRENT_DATE)
+    GROUP BY o.user_id, o.order_date
+    HAVING SUM(o.order_amount) > 1000
+)
+SELECT
+    oa.user_id,
+    u.status,
+    d.department_name,
+    oa.order_date,
+    oa.order_count,
+    oa.total_amount
+FROM order_agg oa
+JOIN users u ON oa.user_id = u.user_id
+JOIN departments d ON u.department_id = d.department_id;
 ```
 
-### 9.2 Python 性能测试脚本
+#### 优化点分析
 
-```python
-import snowflake.connector
-import time
-import statistics
+- 将高基数 GROUP BY 从 4 列降低为 2 列
+- 在事实表层完成主要聚合，减少 JOIN 后聚合压力
+- 显著减少聚合阶段计算复杂度
 
-def benchmark_query(conn, sql, iterations=100):
-    times = []
-    for i in range(iterations):
-        start = time.time()
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        cursor.fetchall()
-        end = time.time()
-        times.append(end - start)
+#### 性能对比（X-Small）
 
-    return {
-        'p50': statistics.median(times),
-        'p95': statistics.quantiles(times, n=20)[18],
-        'p99': statistics.quantiles(times, n=100)[98],
-        'avg': statistics.mean(times),
-        'min': min(times),
-        'max': max(times)
-    }
+| 版本 | 执行时间 | Rows Produced |
+|---|---|---|
+| 原始 | ≈ 1.05 s | 73,000 |
+| 优化 | ≈ 0.78 s | 73,000 |
 
-# 使用示例
-conn = snowflake.connector.connect(...)
-sql = "SELECT * FROM orders WHERE order_date = '2025-01-15'"
-results = benchmark_query(conn, sql, 100)
-print(f"P50: {results['p50']:.2f}s")
-print(f"P95: {results['p95']:.2f}s")
-```
+> 结论：在当前数据规模下，Snowflake 已接近物理下限，优化收益有限但可观。
 
 ---
 
-**测试完成时间：** 2025-02-01 18:00
-**测试审核人：** 李导师
-**批准状态：** ✅ 已批准上线
+### 场景 3：嵌套子查询（Subquery）
+
+**目的**  
+验证 Snowflake 对子查询的自动优化能力。
+
+#### 原始查询
+
+```sql
+SELECT
+    u.user_id,
+    u.user_name,
+    u.department_id
+FROM users u
+WHERE u.user_id IN (
+    SELECT o.user_id
+    FROM orders o
+    WHERE o.order_amount > 4000
+      AND o.order_date >= DATEADD(MONTH, -12, CURRENT_DATE)
+);
+```
+
+#### 优化后查询（JOIN 改写）
+
+```sql
+SELECT DISTINCT
+    u.user_id,
+    u.user_name,
+    u.department_id
+FROM users u
+JOIN orders o ON u.user_id = o.user_id
+WHERE o.order_amount > 4000
+  AND o.order_date >= DATEADD(MONTH, -12, CURRENT_DATE);
+```
+
+#### 优化点分析
+
+- 消除嵌套子查询，提升可读性
+- 执行计划等价（Semi Join）
+- 性能差异极小，体现 Snowflake 自动优化能力
+
+#### 性能对比
+
+| 版本 | 执行时间 | Rows Produced |
+|---|---|---|
+| 原始 | ≈ 0.64 s | 1,000 |
+| 优化 | ≈ 0.50 s | 1,000 |
+
+---
+
+## 3. 总体结论
+
+1. Snowflake 在多表 JOIN 和子查询场景中具备强大的自动优化能力
+2. 对于大数据量聚合，优化空间主要来自于 **降低 GROUP BY 基数**
+3. 在数据量较小或可完全内存化的场景中，性能瓶颈往往来自 CPU 聚合而非 I/O
+4. Query Profile 是判断是否“还能继续优化”的关键依据
+
+---
+
+## 4. 建议
+
+- 对高频复杂聚合场景，可考虑物化视图
+- 高并发环境下建议使用 Multi-Cluster Warehouse
+- 不建议过度追求 SQL 微优化，应关注数据规模与资源配置匹配
+
+---
+
+**文档状态：完成**

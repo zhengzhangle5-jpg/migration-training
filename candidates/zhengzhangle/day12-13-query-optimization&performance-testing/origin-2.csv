@@ -1,0 +1,20 @@
+QUERY_ID,SESSION_ID,WAREHOUSE_NAME,WAREHOUSE_SIZE,TOTAL_ELAPSED_TIME,COMPILATION_TIME,EXECUTION_TIME,QUEUED_PROVISIONING_TIME,QUEUED_REPAIR_TIME,BYTES_SCANNED,ROWS_PRODUCED,PARTITIONS_SCANNED,PARTITIONS_TOTAL,QUERY_TEXT
+01c18bc7-0003-2521-0003-2fda0002bc92,897038279639098,COMPUTE_WH,X-Small,1184,137,1047,0,0,4166800,73000,3,3,"SELECT
+    u.user_id,
+    u.status,
+    d.department_name,
+    o.order_date,
+    COUNT(DISTINCT o.order_id) AS order_count,
+    SUM(o.order_amount * 1.07) AS total_amount
+FROM orders o
+JOIN users u
+    ON o.user_id = u.user_id
+JOIN departments d
+    ON u.department_id = d.department_id
+WHERE o.order_date >= DATEADD(MONTH, -12, CURRENT_DATE)
+GROUP BY
+    u.user_id,
+    u.status,
+    d.department_name,
+    o.order_date
+HAVING SUM(o.order_amount) > 1000;"

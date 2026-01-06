@@ -1,0 +1,22 @@
+QUERY_ID,SESSION_ID,WAREHOUSE_NAME,WAREHOUSE_SIZE,TOTAL_ELAPSED_TIME,COMPILATION_TIME,EXECUTION_TIME,QUEUED_PROVISIONING_TIME,QUEUED_REPAIR_TIME,BYTES_SCANNED,ROWS_PRODUCED,PARTITIONS_SCANNED,PARTITIONS_TOTAL,QUERY_TEXT
+01c18b7c-0003-2521-0003-2fda0002b1ee,897038279639098,COMPUTE_WH,X-Small,6551,93,6458,0,0,12792832,4500000,7,7,"SELECT
+    o.order_id,
+    u.user_name,
+    d.department_name,
+    p.product_name,
+    c.category_name,
+    pay.pay_amount
+FROM orders o
+JOIN payments pay
+    ON o.order_id = pay.order_id
+   AND pay.status = 'SUCCESS'     -- ⭐ 把过滤条件放到 JOIN 条件中
+JOIN users u
+    ON o.user_id = u.user_id
+JOIN departments d
+    ON u.department_id = d.department_id
+JOIN order_items oi
+    ON o.order_id = oi.order_id
+JOIN products p
+    ON oi.product_id = p.product_id
+JOIN categories c
+    ON p.category_id = c.category_id;"

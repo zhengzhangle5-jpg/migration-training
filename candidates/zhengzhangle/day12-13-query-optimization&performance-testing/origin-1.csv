@@ -1,0 +1,22 @@
+QUERY_ID,SESSION_ID,WAREHOUSE_NAME,WAREHOUSE_SIZE,TOTAL_ELAPSED_TIME,COMPILATION_TIME,EXECUTION_TIME,QUEUED_PROVISIONING_TIME,QUEUED_REPAIR_TIME,BYTES_SCANNED,ROWS_PRODUCED,PARTITIONS_SCANNED,PARTITIONS_TOTAL,QUERY_TEXT
+01c18b6c-0003-245c-0003-2fda0002a0d6,897038279639098,COMPUTE_WH,X-Small,8133,826,7307,0,0,13034688,4500000,7,7,"SELECT
+    o.order_id,
+    u.user_name,
+    d.department_name,
+    p.product_name,
+    c.category_name,
+    pay.pay_amount
+FROM orders o
+JOIN users u
+    ON o.user_id = u.user_id
+JOIN departments d
+    ON u.department_id = d.department_id
+JOIN order_items oi
+    ON o.order_id = oi.order_id
+JOIN products p
+    ON oi.product_id = p.product_id
+JOIN categories c
+    ON p.category_id = c.category_id
+JOIN payments pay
+    ON o.order_id = pay.order_id
+WHERE pay.status = 'SUCCESS';"
