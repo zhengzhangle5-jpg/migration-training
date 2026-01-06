@@ -37,6 +37,8 @@
 [Task-4] ERROR: snowflake-hikari - Connection is not available, request timed out after 30011ms (total=5, active=5, idle=0, waiting=0)
 
 ```
+**图示：**
+![](bug1-origin.png)
 
 ---
 
@@ -97,6 +99,10 @@ config.setLeakDetectionThreshold(30_000);
     }
 ```
 
+### 1.4 修改结果
+
+![](bug1-fixed.png)
+
 ---
 
 ---
@@ -110,6 +116,9 @@ config.setLeakDetectionThreshold(30_000);
 ```关键日志部分：
 WARN  com.zaxxer.hikari.pool.ProxyLeakTask - Connection leak detection triggered for n
 ```
+
+**图示：**
+![](bug2-origin.png)
 
 ---
 
@@ -131,8 +140,12 @@ conn.close();
 
 **优化源码逻辑：**
 ```
-删除‘Thread.sleep(60_000);’
+删除‘Thread.sleep(60_000);’，组织连接被长时间占用
 ```
+
+### 2.4 优化结果
+
+![](bug2-fixed.png)
 
 ---
 
@@ -194,6 +207,9 @@ conn.close();
 java.sql.SQLFeatureNotSupportedException: Transaction Isolation 8 not supported.
 ```
 
+**图示：**
+![](bug4-origin.png)
+
 ---
 
 ### 4.2 原因定位
@@ -219,6 +235,10 @@ java.sql.SQLFeatureNotSupportedException: Transaction Isolation 8 not supported.
         // ❗ 不设置 transactionIsolation
 ```
 
+### 4.4 优化结果
+
+![](bug4-fixed.png)
+
 ---
 
 ---
@@ -233,6 +253,9 @@ java.sql.SQLFeatureNotSupportedException: Transaction Isolation 8 not supported.
 14:54:51.646 [main] ERROR com.zaxxer.hikari.pool.HikariPool - bug5-mixed-pool - Error thrown while acquiring connection from data source
 java.sql.SQLFeatureNotSupportedException: Transaction Isolation 8 not supported.
 ```
+
+**图示:**
+![](bug5-origin.png)
 
 ---
 
@@ -286,6 +309,10 @@ java.sql.SQLFeatureNotSupportedException: Transaction Isolation 8 not supported.
 
         config.setDataSourceProperties(props);
 ```
+
+### 5.4 优化结果
+
+![](bug5-fixed.png)
 
 ---
 

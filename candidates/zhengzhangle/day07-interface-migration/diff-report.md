@@ -16,11 +16,53 @@
 
 **在oracle的业务2特意使用了DECODE、NVL、隐式Join等oracle特有语法，并使用了CASE、COALESCE、JOIN标准ANSI写法进行了替换**
 
+## 2 业务1：简单查询
+
+### 2.1 oracle业务1源码
+
+```java
+String sql = """
+            SELECT EMPLOYER_ID,
+                   EMPLOYER_NAME,
+                   INDUSTRY,
+                   EMP_COUNT,
+                   CREATED_DATE
+            FROM EMPLOYERS
+            WHERE EMPLOYER_ID = ?
+        """;
+```
+
+### 2.2 snowflake业务1源码
+
+```java
+String sql = """
+            SELECT EMPLOYER_ID,
+                   EMPLOYER_NAME,
+                   INDUSTRY,
+                   EMP_COUNT,
+                   CREATED_DATE
+            FROM EMPLOYERS
+            WHERE EMPLOYER_ID = ?
+        """;
+```
+
+### 2.3 查询结果对比
+
+---
+oracle查询结果：
+![](oracle-1.png)
+---
+snowflake查询结果：
+![](snowflake-1.png)
+---
+
+**结果分析：** 按照id的简单查询业务均正确无误
+
 ## 3 业务2:复杂查询
 
 ### 3.1 oracle混合查询sql语句
-```
-----业务作用：按照公司类型分组并统计薪资总和
+```java
+//业务作用：按照公司类型分组并统计薪资总和
 String sql = """
             SELECT
                 /* Oracle 专用函数 DECODE，用于行业名称归一化 */
@@ -49,8 +91,8 @@ String sql = """
 ```
 
 ### 3.2 snowflake混合查询sql语句
-```
-----功能，该公司种类分组并查询工资总和，其中种类‘Finance’用‘Fin’代替
+```java
+//功能，该公司种类分组并查询工资总和，其中种类‘Finance’用‘Fin’代替
 String sql = """
     SELECT
         /* from Oracle DECODE(...) -> Snowflake CASE WHEN */
