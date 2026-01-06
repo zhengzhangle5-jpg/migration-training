@@ -18,7 +18,7 @@
 
 **工具包名称：** `dataloader`
 **位置：** `com/migration/tools/`
-**功能：** `用于输出DDL到snowflake中执行`
+**功能：** `用于输出数据到snowflake中`
 
 **工具包名称：** `ddlconverter`
 **位置：** `com/migration/tools/`
@@ -49,12 +49,12 @@ ColumnMeta
 
 **当前实现的自动转换规则如下：**
 
-| Oracle 类型   | Snowflake 类型 |
-| ----------- | ------------ |
-| VARCHAR2(n) | VARCHAR(n)   |
-| NUMBER(p,s) | NUMBER(p,s)  |
-| NUMBER(p)   | NUMBER(p)    |
-| DATE        | DATE         |
+| Oracle 类型   | Snowflake 类型  |
+| ----------- |---------------|
+| VARCHAR2(n) | VARCHAR(n)    |
+| NUMBER(p,s) | NUMBER(p,s)   |
+| NUMBER(p)   | NUMBER(p)     |
+| DATE        | TIMESTAMP_NTZ |
 
 
 ### 1.3 原始建表语句/查询结果一览
@@ -88,13 +88,12 @@ CREATED_DATE  DATE
 
 **当前实现的自动转换规则如下：**
 
-| Oracle 类型   | Snowflake 类型 | 对应字段名        |
-| ----------- | ------------ |--------------|
-| VARCHAR2(n) | VARCHAR(n)   | EMPLOYER_ID |
-| NUMBER(p,s) | NUMBER(p,s)  | REPORT_YEAR  |
-| NUMBER(p)   | NUMBER(p)    | EMPLOYER_ID |
-| DATE        | DATE         | CREATED_DATE |
-
+| Oracle 类型   | Snowflake 类型  | 对应字段名        |
+| ----------- |---------------|--------------|
+| VARCHAR2(n) | VARCHAR(n)    | EMPLOYER_ID |
+| NUMBER(p,s) | NUMBER(p,s)   | REPORT_YEAR  |
+| NUMBER(p)   | NUMBER(p)     | EMPLOYER_ID |
+| DATE        | TIMESTAMP_NTZ | CREATED_DATE |
 
 ---
 
@@ -122,7 +121,7 @@ CREATE TABLE EMPLOYERS (
   EMPLOYER_NAME VARCHAR(100),
   INDUSTRY VARCHAR(50),
   EMP_COUNT NUMBER(8),
-  CREATED_DATE DATE
+  CREATED_DATE TIMESTAMP_NTZ
 );
 ```
 
@@ -164,7 +163,7 @@ JDBC 读取 ResultSet（流式）
 使用 PreparedStatement 逐行插入
 ```
 
-### 3.1 数据正确率分析
+### 3.2 数据正确率分析
 
 **规模：** 
 **字段**4
@@ -174,16 +173,26 @@ JDBC 读取 ResultSet（流式）
 ```
 75%
 ```
+---
+**oracle数据：**
+![](oracle-table.png)
 
-**总结：** 因测试记录数过少，数据转移初步判定没有问题；data转换设计存在时区隐患，故正确率为75%
+---
+**snowflake数据：**
+![](snowflake-table.png)
 
-**解决方案：** 统一使用 Timestamp 类型读写
+---
+
+**正确率分析：** 对比每条数据，CURRENT_DATE字段存在数值上的差异，其余字段的记录均匹配统一，得到转移记录的正确率为75%
+
+**总结：** 因测试记录数过少，数据转移业务的正确性存疑；data转换设计显然存在设计缺陷
 
 ### 3.2 后续优化方向：
 **减少硬编码，将表名和数据库连接信息从代码中分离出来**
 **date多种时间类型差异**
 **oracle还有多种字符类型，CHAR,NCHAR,CLOB等**
 **NOT NULL / DEFAULT / COMMENT 这些建表语句后的补充部分尚未解析**
+**测试更多的记录，增加测试结果的可靠性**
 **同样的，主键、索引等（这部分由人工操作）**
 
 
