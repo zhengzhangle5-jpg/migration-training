@@ -154,6 +154,9 @@ void testStatByIndustry_normal() throws Exception {
 - 分支覆盖率：75% ✅  
 - 核心逻辑覆盖：100% ✅  
 
+**图示(coverage-report.png)：**
+![](coverage-report.png)
+
 ---
 
 ## 6. 测试结论
