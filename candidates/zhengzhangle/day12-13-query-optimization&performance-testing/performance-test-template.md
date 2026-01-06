@@ -85,6 +85,12 @@ JOIN categories c ON p.category_id = c.category_id;
 | 原始 | ≈ 8.1 s | 4,500,000 |
 | 优化 | ≈ 6.6 s | 4,500,000 |
 
+
+**图示：**
+---
+![](origin-1.png)
+---
+![](fixed-1.png)
 ---
 
 ### 场景 2：大数据量聚合（GROUP BY + COUNT / SUM）
@@ -155,6 +161,12 @@ JOIN departments d ON u.department_id = d.department_id;
 
 > 结论：在当前数据规模下，Snowflake 已接近物理下限，优化收益有限但可观。
 
+**图示：**
+---
+![](origin-2.png)
+---
+![](fixed-2.png)
+
 ---
 
 ### 场景 3：嵌套子查询（Subquery）
@@ -203,6 +215,12 @@ WHERE o.order_amount > 4000
 |---|---|---|
 | 原始 | ≈ 0.64 s | 1,000 |
 | 优化 | ≈ 0.50 s | 1,000 |
+
+**图示：**
+---
+![](origin-3.png)
+---
+![](fixed-3.png)
 
 ---
 
