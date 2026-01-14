@@ -91,6 +91,10 @@ Snowflake CURRENT_TIMESTAMP: 2025-12-15 17:08:51.24;
 ```
 
 ---
+![](environment-test-result.png)
+---
+
+---
 
 ## 6. Git 工作流验证
 

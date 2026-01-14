@@ -70,6 +70,16 @@ git push origin feature/day01-environment
     - **原因分析：** 当监听多个地址时，其中一个地址解析失败，整体就会失败
     - **解决方案：** 删除错误的地址
 
+### 5. 结果对比
+
+---
+![](database-comparison-result1.png)
+---
+![](database-comparsion-result2.png)
+---
+![](database-comparison-result3.png)
+---
+
 ## 学习收获
 
 1. 理解了 Snowflake 的角色层次结构（ACCOUNTADMIN > SYSADMIN > 自定义角色）

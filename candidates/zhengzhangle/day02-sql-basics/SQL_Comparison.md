@@ -32,6 +32,9 @@ SELECT CURRENT_USER();
 |--------|--------|-----------|-------------|
 | 伪表dual | `SELECT 1 FROM DUAL` | `SELECT 1` | oracle 需要伪表 |
 ---
+使用了伪表
+![](test1.png)
+---
 
 ## 2. 日期和时间函数
 
@@ -79,7 +82,9 @@ SELECT DATEADD(DAY, 7, CURRENT_DATE()),
        DATEADD(MONTH, 3, CURRENT_DATE());
 
 ```
-
+---
+日期差异对比
+![](test2.png)
 ---
 
 ## 3. 字符串处理
@@ -134,6 +139,8 @@ SELECT SUBSTRING('Snowflake', 1, 4) AS result;
 - 无明显差异
 
 ---
+![](test3.png)
+---
 
 ## 4. NULL 处理
 
@@ -164,6 +171,8 @@ SELECT NVL(commission, 0) AS commission FROM employees;
 - 将 Oracle 的 `NVL` 替换为 `COALESCE`（更标准）
 - Snowflake 也支持 `NVL`，但推荐使用 `COALESCE`
 
+---
+![](test4.png)
 ---
 
 ## 5. 分页与行号

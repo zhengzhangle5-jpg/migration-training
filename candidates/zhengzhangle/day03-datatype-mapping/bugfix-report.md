@@ -81,7 +81,7 @@ CREATE OR REPLACE TABLE ORDERS (
 - PRICE以及TOTAL_AMOUNT的精度被降到了两位
 - 每一行数据在 INSERT 时被隐式四舍五入
 
-```
+
 
 ### 2.3 错误传播路径
 
@@ -90,6 +90,11 @@ CREATE OR REPLACE TABLE ORDERS (
 3. **测试数据不足**：初始测试数据都是整数，未发现小数丢失问题
 4. **数据验证缺失**：未执行聚合函数对比验证
 
+### 2.4 测试结果
+---
+![](oracle-amount.png)
+---
+![](snowflake-amount.png)
 ---
 
 ## 3. 修复方案
@@ -162,6 +167,12 @@ ALTER TABLE ORDERS_NEW RENAME TO ORDERS;
 
 ✅ **修复后数据与 Oracle 完全一致**
 **这里小数点差了一位，是oracle客户端格式化的结果，详情可见oracle-correct.png的测试语句，可证明显示的结果隐藏了最后一位小数**
+
+---
+![](oracle-correct.png)
+---
+![](snowflake-new-amount.png)
+---
 
 ---
 
