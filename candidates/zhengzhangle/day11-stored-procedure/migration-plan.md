@@ -367,7 +367,7 @@ SELECT * FROM proc_log;
 ![oracle SP1结果](oracle-SP1.png)
 **snowflake结果：**
 ![snowflake SP1结果](snowflake-SP1.png)
-**结论：**根据 emp_id 更新员工 bonus， id为1的记录的bonus字段均修改为5000，执行结果均无误
+**结论：** 根据 emp_id 更新员工 bonus， id为1的记录的bonus字段均修改为5000，执行结果均无误
 ---
 
 ### 5.2 SP2结果对比分析
