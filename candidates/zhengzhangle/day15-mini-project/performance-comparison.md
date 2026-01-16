@@ -18,8 +18,8 @@
 ---
 >snowflake:
 >
-![](snowflake-1.png)
-![](snowflake-2.png)
+![](snow-1.png)
+![](snow-2.png)
 ---
 
 **总结：** 迁移前后执行结果一致
